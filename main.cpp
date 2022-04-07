@@ -1,77 +1,99 @@
 
-// https://www.youtube.com/watch?v=B4LDrD-UedE&list=PLDD6B727E5B6B5E33&index=3
-// Suma de vectores para conseguir el vector resultante en la posicion de la direccion  de velocidad
-//aceleracion con tecla arriba
-//debe haber un cambio de posicion permanente  que es el de la velocidad
-//la velocidad se conserva
-//y cuando damos a la flecha de arriba a la velocidad se le suma un vector 
-//luego de esto se rota vector  y se suma luego el vector rotado con el anterior.
+/* https://www.youtube.com/watch?v=pf3D-kkDKHU&list=PLDD6B727E5B6B5E33&index=4
+//Refactorizando el programa
+//Agrupamos variables con una struct  (hacemos una tupla N)
+*/
 
 #include "miniwin.h"
 using namespace miniwin;
 #include <cmath>
 using namespace std;
 
-void rotar(float& x,float& y, float cx, float cy, float da){
-  // componentes rectangulares del vector; recibimos los puntos cartesianos del centro y el punto x referencia para asi cambiarlos directamente
+struct NAVE
+{
+   float x,y,a,vx,vy; 
+};
+
+void rotar(float& x,float& y, float cx, float cy, float da){  
    float dx = x - cx;
-   float dy = y - cy;
-   //magnitud del vector
-   float r = sqrt(dx*dx + dy*dy);
-   //angulo del vector
-   float a = atan2(dy,dx);  //atan2 respeta los negativos bien controla bien el pi atan solo trabaja bien en el 1er cuadrante
-   a -= da/180 * M_PI;  //en radianes  /lo restamos por que en miniwing el y aumenta de arriba hacia abajo
-   //devolvemos los puntos cartesianos
+   float dy = y - cy;  
+   float r = sqrt(dx*dx + dy*dy);   
+   float a = atan2(dy,dx);  
+   a -= da/180 * M_PI;    
    x= cx+r*cos(a);
    y= cy+r*sin(a);
-
 }
-//pinta un rectagulo centrada en x e y con una rotacion del angulo a
-void pinta_nave(float x, float y, float a){
-   float x1 = x, y1 = y - 40;
-   float x2 = x - 15, y2 = y + 10;
-   float x3 = x + 15, y3 = y + 10;
-   rotar(x1,y1,x,y,a);
-   rotar(x2,y2,x,y,a);
-   rotar(x3,y3,x,y,a);
-   
-   
 
+void pinta_nave( const NAVE& N){   //recibe un const por que esto no lo modifica pero es la misma NAVE ya que es x referencia
+   float x1 = N.x, y1 = N.y - 40;
+   float x2 = N.x - 15, y2 = N.y + 10;
+   float x3 = N.x + 15, y3 = N.y + 10;
+   rotar(x1,y1,N.x,N.y,N.a);
+   rotar(x2,y2,N.x,N.y,N.a);
+   rotar(x3,y3,N.x,N.y,N.a);
    linea(x1, y1, x2, y2);
    linea(x2, y2, x3, y3);
    linea(x3, y3, x1, y1);
 }
 
+
+//mueve_nave no sera const ya que se pudrá modif x refeencia
+//de este modo ya me olvido de como se movia la nave que podría ser tan complicado como sea
+void mueve_nave(NAVE& N){
+   N.x+= N.vx;   
+   N.y+=N.vy;
+   //controlar límites
+   if (N.x > 500){
+      N.x-=500;
+   } else if (N.x <0){
+      N.x +=500;
+   }
+    if (N.y > 500){
+      N.y-=500;
+   } else if (N.y <0){
+      N.y +=500;
+   }
+}
+
+//Acelera Nave simplificando lo que se hacia muy grande en el main
+//(mas de 25 lineas ya hay que empezar a pensar a arreglar algo separando x funciones)
+void acelera_nave(NAVE& N){
+    float ax=0.0, ay= -0.5;
+         rotar(ax,ay,0.0,0.0,N.a);
+         N.vx=N.vx+ax;
+         N.vy=N.vy+ay;
+}
+
+//Rota Nave
+void rota_nave(NAVE& N, double da){
+   N.a += da;
+
+}
+
+
 int main() {
-   vredimensiona(500, 500);   
-   float x=250, y=250, a=0;  //posicion de la nave
-   float vx = 0.5, vy=0.0; //velocidad inicial
+   vredimensiona(500, 500);  
+
+   NAVE N={ 250,250,0,0.0,0.0}; 
+   
    int t= tecla();
    while (t != ESCAPE){
-      x+= vx;   //desplazamiento horizontal 20 pixeles x seg
-      y+=vy;   //desplazamiento vertical  30 pixeles x seg (nave va para abajo)
+       mueve_nave(N);
 
       if(t==DERECHA){
-         a-=8;   //restamos 5 grados si se presiona derecha
+         rota_nave(N, -10);   
       } else if (t==IZQUIERDA){
-         a+=8;
+         rota_nave(N, 10);
       } else if (t==ARRIBA) {
-
-         float ax=0.0, ay= -0.5;
-         rotar(ax,ay,0.0,0.0,a);
-         vx=vx+ax;
-         vy=vy+ay;
+        acelera_nave(N);
       }
       //refrescar la pantall      
       borra();
-      pinta_nave(x,y,a);   //refresca la nave 100 veces x seg
+      pinta_nave(N);   
       refresca();
-      espera(10); //solo pedimos 100 teclas x segundo  (esperamos 10 mms)
+      espera(10); 
       t=tecla();
    }
-   vcierra();
-
-   
-   
+   vcierra();   
    return 0;
 }
