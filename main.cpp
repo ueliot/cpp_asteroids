@@ -37,22 +37,24 @@ void pinta_nave( const NAVE& N){   //recibe un const por que esto no lo modifica
 }
 
 
+
+//Limite de nave
+void limites (float& f, float max) {
+   if (f> max){
+      f -=max;
+   } else if (f < 0){
+      f +=max;
+   }
+}
+
 //mueve_nave no sera const ya que se pudrá modif x refeencia
 //de este modo ya me olvido de como se movia la nave que podría ser tan complicado como sea
 void mueve_nave(NAVE& N){
    N.x+= N.vx;   
    N.y+=N.vy;
    //controlar límites
-   if (N.x > 500){
-      N.x-=500;
-   } else if (N.x <0){
-      N.x +=500;
-   }
-    if (N.y > 500){
-      N.y-=500;
-   } else if (N.y <0){
-      N.y +=500;
-   }
+   limites(N.x, 500);
+   limites(N.y, 500);
 }
 
 //Acelera Nave simplificando lo que se hacia muy grande en el main
